@@ -13,6 +13,8 @@ from dataclasses import dataclass
 import math
 import json
 from matplotlib import pyplot as plt
+from datetime import datetime
+
 
 # הפרטים שצריך מתמונה: 
 # - שם מלא
@@ -147,9 +149,46 @@ class OCRProcessor:
         cropped_image = bgr_image[y:y + h, x:x + w]        
 
         return cropped_image
- 
-    
-    
+
+    def rerun_on_crop(self, rect, image):
+        x, y, w, h = rect
+        image_height, image_width = image.shape[:2]
+
+        # Ensure the bounding box stays within the image bounds
+        x = max(0, x)  # Clamp x to be at least 0
+        y = max(0, y)  # Clamp y to be at least 0
+        w = min(w, image_width - x)  # Ensure the width does not go beyond the image
+        h = min(h, image_height - y)  # Ensure the height does not go beyond the image
+
+        # Crop the image using the bounding box of the next word
+        cropped_image = image[y:y + h, x:x + w]
+        # Convert to grayscale
+        cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
+        # cropped_image = cv2.equalizeHist(gray_image)
+
+        # Apply binary thresholding
+        _, cropped_image = cv2.threshold(cropped_image, 100, 255, cv2.THRESH_BINARY)
+
+        # Use pytesseract to extract text from the cropped image
+        cropped_text = pytesseract.image_to_string(cropped_image, config='--psm 6')
+
+        num_new_lines = cropped_text.count('\n')
+        if num_new_lines > 2:
+            raise(Exception("num new lines on crop > 2, no idea what to do"))
+        if num_new_lines == 2:
+            return cropped_text.split('\n')[1]
+        if num_new_lines == 0:
+            return cropped_text
+        # if gets here, num new lines = 1
+        first_word = cropped_text.split('\n')[1]
+        second_word = cropped_text.split('\n')[0]
+        if first_word > second_word:
+            return first_word
+        else:
+            return second_word
+
+
+
     def process(self, image, delta=25):
         # Create a copy of the image for debugging
         debug_image = image.copy()
@@ -161,6 +200,12 @@ class OCRProcessor:
         word_info_list = []
 
         # Iterate through each detected word
+        start_line = 0
+        for i in range(len(data['text'])):
+            if data['text'][i] != "":
+                start_line = data["line_num"][i]
+                break
+
         for i in range(len(data['text'])):
             if int(data['conf'][i]) >= 0:  
                 word = data['text'][i]
@@ -189,7 +234,7 @@ class OCRProcessor:
                 # Store the word details in WordInfo with expanded bounding box
                 word_info = WordInfo(
                     text=word,
-                    line=data["line_num"][i],
+                    line=data["line_num"][i] - start_line,
                     rect=(new_x, new_y, new_w, new_h),
                     pixel_center=(center_x, center_y),
                     conf=conf
@@ -260,13 +305,12 @@ class OCRProcessor:
 
     def detect_name_on_small_sticker(self, words_info):
         full_name = []  # List to store the detected full name
-        
+        name_line_num = 0
         for index, word in enumerate(words_info):
-            # the word is the the age of the person, break
-            if word.text.isdigit() :           
+            if word.line != name_line_num or any(c.isdigit() for c in word.text):
                 break
-            
             full_name.append(word.text)
+
                 
 
         if len(full_name) > 0:
@@ -291,6 +335,10 @@ class OCRProcessor:
                 else:
                     next_word = words_info[index + 2]
 
+                id = self.rerun_on_crop(next_word.rect, image)
+                return id
+
+                """
 
                 # Extract the bounding box coordinates of the next word
                 x, y, w, h = next_word.rect
@@ -305,17 +353,17 @@ class OCRProcessor:
                 # Crop the image using the bounding box of the next word
                 cropped_image = image[y:y + h, x:x + w]
                 # Convert to grayscale
-                gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
+                cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
+                #cropped_image = cv2.equalizeHist(gray_image)
 
                 # Apply binary thresholding
-                _, binary_image = cv2.threshold(gray_image, 100, 255, cv2.THRESH_BINARY)
+                _, cropped_image = cv2.threshold(cropped_image, 100, 255, cv2.THRESH_BINARY)
                 
                 # Use pytesseract to extract text from the cropped image
-                cropped_text = pytesseract.image_to_string(binary_image, config='--psm 6')
-                
+                cropped_text = pytesseract.image_to_string(cropped_image, config='--psm 6')
 
-                detected_ids.append(cropped_text)                   
-                   
+                return cropped_text.strip("\n")
+                """
         
         
         if len(detected_ids) > 0:
@@ -336,51 +384,81 @@ class OCRProcessor:
         detected_case_number = ''  # To store the case  with the longest sequence of numbers
         image_height, image_width = image.shape[:2]  # Get image dimensions
 
+        case_number = ""
+        case_line_num = None
+        started_case = False
         for index, word in enumerate(words_info):
+            if case_line_num is not None and word.line != case_line_num:
+                break
+            if started_case:
+                case_number += word.text
             if 'מקר' in word.text:  # and any(c.isdigit() for c in word.text):
+                started_case = True
+                case_line_num = word.line
+                if ":" in word.text:
+                    case_number += word.text[(word.text.find(":") + 1):]
 
-                word = words_info[index + 1]
-                return word.text
+        return case_number
 
-                # Extract the bounding box coordinates of the next word
-                x, y, w, h = word.rect
+        # Extract the bounding box coordinates of the next word
+        x, y, w, h = word.rect
 
-                # Ensure the bounding box stays within the image bounds
-                x = max(0, x)  # Clamp x to be at least 0
-                y = max(0, y)  # Clamp y to be at least 0
-                w = min(w, image_width - x)  # Ensure the width does not go beyond the image
-                h = min(h, image_height - y)  # Ensure the height does not go beyond the image
+        # Ensure the bounding box stays within the image bounds
+        x = max(0, x)  # Clamp x to be at least 0
+        y = max(0, y)  # Clamp y to be at least 0
+        w = min(w, image_width - x)  # Ensure the width does not go beyond the image
+        h = min(h, image_height - y)  # Ensure the height does not go beyond the image
 
-                # Crop the image using the bounding box of the next word
-                cropped_image = image[y:y + h, x:x + w]
-                # Convert to grayscale
-                gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
+        # Crop the image using the bounding box of the next word
+        cropped_image = image[y:y + h, x:x + w]
+        # Convert to grayscale
+        gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
 
-                # Apply binary thresholding
-                _, binary_image = cv2.threshold(gray_image, 100, 255, cv2.THRESH_BINARY)
+        # Apply binary thresholding
+        _, binary_image = cv2.threshold(gray_image, 100, 255, cv2.THRESH_BINARY)
 
-                # Use pytesseract to extract text from the cropped image
-                cropped_text = pytesseract.image_to_string(binary_image, config='--psm 6')
+        # Use pytesseract to extract text from the cropped image
+        cropped_text = pytesseract.image_to_string(binary_image, config='--psm 6')
 
-                detected_case_number = ''.join(c for c in cropped_text if c.isdigit())
+        detected_case_number = ''.join(c for c in cropped_text if c.isdigit())
 
-                # Display the cropped image (optional for debugging)
-                # cv2.imshow(f'Index {index}', cropped_image)
-                # cv2.imshow(f'binary_image', binary_image)
+        # Display the cropped image (optional for debugging)
+        # cv2.imshow(f'Index {index}', cropped_image)
+        # cv2.imshow(f'binary_image', binary_image)
 
-                # cv2.waitKey(0)
-
-                return detected_case_number
+        # cv2.waitKey(0)
 
         return detected_case_number
-    
+
+    def detect_case_number_on_small_sticker(self, words_info, image):
+        start_search_line = None
+        for index, word in enumerate(words_info):
+            # Check if the word contains 'מ.ז' or 'מז'
+            if 'מ.ז' in word.text or 'מז' in word.text:
+                start_search_line = word.line+1
+                break
+
+        for index, word in enumerate(words_info):
+            if word.line < start_search_line:
+                continue
+            if all(c.isdigit() for c in word.text):
+                res = self.rerun_on_crop(word.rect, image)
+                if not all(c.isdigit() for c in res):
+                    continue
+                else:
+                    assert len(res) == 8
+                    return res
+
+
+
     def detect_case_number(self, words_info, image):
         
         res = self.detect_case_number_on_large_sticker(words_info, image)
         
-        if res != '':
-            return res
-
+        if res == '':
+            res = self.detect_case_number_on_small_sticker(words_info, image)
+        return res
+        """
         max_length = 0  # To track the maximum length of number sequence
         detected_id = ''  # To store the ID with the longest sequence of numbers
         image_height, image_width = image.shape[:2]  # Get image dimensions
@@ -436,8 +514,53 @@ class OCRProcessor:
             
         # Return the detected ID with the longest number sequence
         return detected_id
-    
-    def detect_date(self, words_info, image):        
+        """
+
+    def detect_date_on_large_sticker(self, words_info, image):
+        for index, word in enumerate(words_info):
+            if 'קבלה' in word.text:
+                # Check only the next word, if exists
+                if ":" in word.text:
+                    next_word = words_info[index + 1]
+                else:
+                    next_word = words_info[index + 2]
+                return next_word.text  # don't try to improve contrast, it may get worse
+        return ""
+
+
+    def detect_date_on_medium_sticker(self, words_info, image):
+        date_line_num = None
+        date = ""
+        started_date = False
+        for index, word in enumerate(words_info):
+            if 'מ.ז' in word.text or 'מז' in word.text:
+                date_line_num = word.line + 1
+            if date_line_num is not None and word.line == date_line_num:
+                if any(c.isdigit() for c in word.text) or started_date:
+                    started_date = True
+                    date += word.text
+        return date
+
+
+
+
+    def detect_date(self, words_info, image):
+        res = self.detect_date_on_large_sticker(words_info, image)
+        if res == "":
+            res = self.detect_date_on_medium_sticker(words_info, image)
+        if res == "":
+
+            # Get today's date
+            today = datetime.today()
+
+            # Format the date as DD,MM.YY
+            formatted_date = today.strftime("%d.%m.%y")
+            print("no date found, defaulting to today")
+            return formatted_date
+
+        return res
+
+
      
         image_height, image_width = image.shape[:2]  # Get image dimensions
         
