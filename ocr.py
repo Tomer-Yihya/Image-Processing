@@ -14,6 +14,9 @@ import math
 import json
 from matplotlib import pyplot as plt
 from datetime import datetime
+os.environ["TESSDATA_PREFIX"] = r"C:\Program Files\Tesseract-OCR\tessdata"
+
+
 
 
 # הפרטים שצריך מתמונה: 
@@ -119,7 +122,6 @@ class OCRProcessor:
 
 
 
-
     def crop_by_color(self, bgr_image, bgr_color, threshold=40):
         if bgr_image is None:
             raise ValueError("Input image is None. Ensure the image path is correct and accessible.")
@@ -149,6 +151,8 @@ class OCRProcessor:
         cropped_image = bgr_image[y:y + h, x:x + w]        
 
         return cropped_image
+
+
 
     def rerun_on_crop(self, rect, image):
         x, y, w, h = rect
@@ -255,6 +259,7 @@ class OCRProcessor:
         return word_info_list
 
 
+
     def detect_name(self, words_info):
 
         name_from_large_sticker = self.detect_name_on_large_sticker(words_info)
@@ -265,7 +270,8 @@ class OCRProcessor:
         print(f' name_from_small_sticker {name_from_small_sticker}')
         return name_from_small_sticker
 
-    
+
+
     def detect_name_on_large_sticker(self, words_info, y_threshold=10):
         full_name = []  # List to store the detected full name
         
@@ -303,6 +309,8 @@ class OCRProcessor:
 
         return ''
 
+
+
     def detect_name_on_small_sticker(self, words_info):
         full_name = []  # List to store the detected full name
         name_line_num = 0
@@ -318,6 +326,8 @@ class OCRProcessor:
             return full_name_string
 
         return ''
+
+
 
     def detect_person_id(self, words_info, image):
         
@@ -338,33 +348,6 @@ class OCRProcessor:
                 id = self.rerun_on_crop(next_word.rect, image)
                 return id
 
-                """
-
-                # Extract the bounding box coordinates of the next word
-                x, y, w, h = next_word.rect
-
-                # Ensure the bounding box stays within the image bounds
-                x = max(0, x)  # Clamp x to be at least 0
-                y = max(0, y)  # Clamp y to be at least 0
-                w = min(w, image_width - x)  # Ensure the width does not go beyond the image
-                h = min(h, image_height - y)  # Ensure the height does not go beyond the image
-
-
-                # Crop the image using the bounding box of the next word
-                cropped_image = image[y:y + h, x:x + w]
-                # Convert to grayscale
-                cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
-                #cropped_image = cv2.equalizeHist(gray_image)
-
-                # Apply binary thresholding
-                _, cropped_image = cv2.threshold(cropped_image, 100, 255, cv2.THRESH_BINARY)
-                
-                # Use pytesseract to extract text from the cropped image
-                cropped_text = pytesseract.image_to_string(cropped_image, config='--psm 6')
-
-                return cropped_text.strip("\n")
-                """
-        
         
         if len(detected_ids) > 0:
             print('multiple ids !')
@@ -378,6 +361,8 @@ class OCRProcessor:
             
         # Return the detected ID with the longest number sequence
         return detected_id
+
+
 
     def detect_case_number_on_large_sticker(self, words_info, image):
 
@@ -429,6 +414,8 @@ class OCRProcessor:
         # cv2.waitKey(0)
 
         return detected_case_number
+
+
 
     def detect_case_number_on_small_sticker(self, words_info, image):
         start_search_line = None
@@ -516,6 +503,8 @@ class OCRProcessor:
         return detected_id
         """
 
+
+
     def detect_date_on_large_sticker(self, words_info, image):
         for index, word in enumerate(words_info):
             if 'קבלה' in word.text:
@@ -526,6 +515,7 @@ class OCRProcessor:
                     next_word = words_info[index + 2]
                 return next_word.text  # don't try to improve contrast, it may get worse
         return ""
+
 
 
     def detect_date_on_medium_sticker(self, words_info, image):
@@ -540,7 +530,6 @@ class OCRProcessor:
                     started_date = True
                     date += word.text
         return date
-
 
 
 
@@ -620,34 +609,35 @@ if __name__ == "__main__":
     
     ocr_processor = OCRProcessor()   
 
-    #image = cv2.imread("/home/cogniteam-user/sticker_ws/sticker_recognition/new/3.jpeg",1)
-    image = cv2.imread("pictures/IMG-20250219-WA0029.jpg", 1)
+    #image = cv2.imread("C:\\Users\\A3DC~1\\Desktop\\Image processing project\\big_easy.JPG", 1)
+    #image = cv2.imread("C:\\Users\\A3DC~1\\Desktop\\Image processing project\\medium_easy.JPG", 1)
+    image = cv2.imread("C:\\Users\\A3DC~1\\Desktop\\Image processing project\\small_easy.JPG", 1)
    
     
-    yellow_bgr_color =   (0, 187, 200)  
+    #yellow_bgr_color =   (0, 187, 200)
 
     #rotate_image = ocr_processor.rotate_image(image, yellow_bgr_color) #todo debug
-    rotate_image = image
+    #rotate_image = image
 
-    plt.figure()
-    plt.imshow(image)
-    plt.show()
+    #plt.figure()
+    #plt.imshow(image)
+    #plt.show()
     #cv2.imshow(f'rotate_image', rotate_image) #debug
     #cv2.waitKey(0)
 
-    cropped_image = ocr_processor.crop_by_color(rotate_image, yellow_bgr_color)
+    #cropped_image = ocr_processor.crop_by_color(rotate_image, yellow_bgr_color)
     
-    words_info = ocr_processor.process(cropped_image)
+    words_info = ocr_processor.process(image)
     for word in words_info:
         print(word)
     
     full_name = ocr_processor.detect_name(words_info)
     #print(f'*** name is: {full_name}')
-    id = ocr_processor.detect_person_id(words_info, cropped_image)
+    id = ocr_processor.detect_person_id(words_info, image)
     #print(f'*** id is: {id}')   
-    case_number = ocr_processor.detect_case_number(words_info, cropped_image)
+    case_number = ocr_processor.detect_case_number(words_info, image)
     #print(f'*** case_number is: {case_number}')
-    date =  ocr_processor.detect_date(words_info, cropped_image)
+    date =  ocr_processor.detect_date(words_info, image)
     #print(f'*** date is: {date}')
 
     # Store the values in a dictionary
