@@ -2,8 +2,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import cv2
 import numpy as np
-import os
 from algorithem import detect_all_barcodes, process_barcodes_and_extract_fields, process_image
+import os
+os.system("apt-get update && apt-get install -y tesseract-ocr")
+
 
 app = Flask(__name__)
 CORS(app)  # Allows communication from FlutterFlow
