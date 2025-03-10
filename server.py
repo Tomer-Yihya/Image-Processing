@@ -3,7 +3,8 @@ from flask_cors import CORS
 import cv2
 import numpy as np
 import os
-from algorithem import detect_all_barcodes, process_barcodes_and_extract_fields
+from algorithem import detect_all_barcodes, process_barcodes_and_extract_fields, process_image
+
 
 app = Flask(__name__)
 CORS(app)  # Allows communication from FlutterFlow
