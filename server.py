@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import cv2
 import numpy as np
-import os
+import pytesseract
 
 app = Flask(__name__)
 
@@ -21,9 +21,10 @@ def upload_image():
     return jsonify({"result": processed_result})
 
 def process_image(image):
-    # כאן נכנס האלגוריתם שלך לעיבוד התמונה
+    """Extracts text from image using Tesseract OCR"""
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    return "Image processed successfully"
+    extracted_text = pytesseract.image_to_string(gray)  # שימוש ב-Tesseract להפקת טקסט
+    return extracted_text.strip() if extracted_text else "No text detected"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
