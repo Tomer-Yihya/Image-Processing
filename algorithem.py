@@ -8,6 +8,7 @@ import json
 from heapq import nlargest
 from PIL import Image
 from datetime import datetime
+import argparse
 
 
 
@@ -336,7 +337,7 @@ def detect_all_barcodes(image, display_results=False):
         strip_id = config['id']
         barcode_regions = detect_barcodes_in_strip(image, config, display_results)
         all_barcodes[strip_id] = barcode_regions
-        print(f"Strip {strip_id}: Found {len(barcode_regions)} barcodes")
+        #print(f"Strip {strip_id}: Found {len(barcode_regions)} barcodes")
     
     # Display results on the full image if requested
     if display_results:
@@ -592,6 +593,7 @@ def extract_fields_from_barcode(image, barcode_location, strip_id, display=False
     if strip_id in [1, 2, 3]:
         case_id_roi = (bx + case_id_shift[0], by + case_id_shift[1], case_id_shift[2], case_id_shift[3])
         
+        """
         # Save the ROI for debugging
         roi_debug = image[by + case_id_shift[1]:by + case_id_shift[1] + case_id_shift[3], 
                         bx + case_id_shift[0]:bx + case_id_shift[0] + case_id_shift[2]]
@@ -617,6 +619,7 @@ def extract_fields_from_barcode(image, barcode_location, strip_id, display=False
         # Use the best result
         fields["case_id"] = best_result
         print(f"Selected case_id: '{best_result}'")
+        """
     
     """
     # Extract case ID
@@ -705,7 +708,7 @@ def process_barcodes_and_extract_fields(image, barcodes_dict, display=False):
             # Take the first barcode from this strip
             selected_barcode = barcodes_dict[strip_id][0]
             selected_strip_id = strip_id
-            print(f"Selected barcode from strip {selected_strip_id}: {selected_barcode}")
+            #print(f"Selected barcode from strip {selected_strip_id}: {selected_barcode}")
             break
     
     # If no barcode found, return empty result
@@ -733,6 +736,45 @@ def save_fields_to_json(fields, output_path):
         json.dump(fields, f, ensure_ascii=False, indent=2)
     print(f"Fields saved to {output_path}")
 
+
+
+
+
+#!/usr/bin/env python3
+"""
+Yellow Sticker Barcode Detection and Field Extraction Script
+This script processes an image containing a yellow sticker with barcodes,
+detects the barcodes, and extracts relevant patient fields.
+"""
+
+def main():
+    # Set up command line argument parsing
+    parser = argparse.ArgumentParser(description='Detect barcodes and extract fields from medical stickers')
+    parser.add_argument('image_path', type=str, help='Path to the input image file')
+    parser.add_argument('--save', type=str, help='Path to save the extracted fields as JSON (optional)')
+    args = parser.parse_args()
+    
+    # Step 1: Detect and resize the yellow sticker
+    resized = process_image(args.image_path)
+    
+    # Step 2: Find all barcodes in the resized image
+    detected_barcodes = detect_all_barcodes(resized, display_results=False)
+    
+    # Step 3: Process barcodes and extract fields
+    extracted_fields = process_barcodes_and_extract_fields(resized, detected_barcodes, display=False)
+    
+    # Reverse Hebrew names for proper right-to-left display
+    extracted_fields['name'] = extracted_fields['name'][::-1]
+               
+    # Print the extracted fields as JSON
+    print(json.dumps(extracted_fields, ensure_ascii=False, indent=2))
+    
+    # save the results to a file
+    save_fields_to_json(extracted_fields, "output.json")    
+
+
+if __name__ == "__main__":
+    main()
 
 
 
