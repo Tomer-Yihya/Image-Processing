@@ -5,7 +5,6 @@ import numpy as np
 import os
 from algorithem import detect_all_barcodes, process_barcodes_and_extract_fields, process_image
 
-
 app = Flask(__name__)
 CORS(app)  # Allows communication from FlutterFlow
 
@@ -18,11 +17,30 @@ def upload_image():
     np_img = np.frombuffer(file.read(), np.uint8)
     image = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
 
-    # Process image directly without using file path
-    detected_barcodes = detect_all_barcodes(image, display_results=False)
-    extracted_fields = process_barcodes_and_extract_fields(image, detected_barcodes, display=False)
+    # Process image before detecting barcodes
+    processed_image = process_image(image)
+
+    # Detect barcodes and extract fields
+    detected_barcodes = detect_all_barcodes(processed_image, display_results=False)
+    extracted_fields = process_barcodes_and_extract_fields(processed_image, detected_barcodes, display=False)
 
     return jsonify(extracted_fields)
+
+
+
+@app.route('/check-tesseract', methods=['GET'])
+def check_tesseract():
+    import pytesseract
+    try:
+        version = pytesseract.get_tesseract_version()
+        return jsonify({"Tesseract Version": str(version)})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+
+
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
