@@ -21,14 +21,19 @@ RUN apt-get update && apt-get install -y \
 # Ensure Tesseract tessdata directory exists
 RUN mkdir -p /usr/share/tesseract-ocr/4.00/tessdata
 
-# Download Hebrew trained data (if missing)
+# Download Hebrew and English trained data (to prevent errors)
 RUN wget -O /usr/share/tesseract-ocr/4.00/tessdata/heb.traineddata \
-    https://github.com/tesseract-ocr/tessdata_best/raw/main/heb.traineddata
+    https://github.com/tesseract-ocr/tessdata_best/raw/main/heb.traineddata && \
+    wget -O /usr/share/tesseract-ocr/4.00/tessdata/eng.traineddata \
+    https://github.com/tesseract-ocr/tessdata_best/raw/main/eng.traineddata
 
 # Set Tesseract OCR language data path
 ENV TESSDATA_PREFIX="/usr/share/tesseract-ocr/4.00/tessdata"
 
-# Verify installation - check if Hebrew is available
+# Export TESSDATA_PREFIX for runtime use
+RUN echo "export TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata" >> ~/.bashrc
+
+# Verify installation - check if Hebrew and English are available
 RUN tesseract --list-langs
 
 # Install required Python dependencies
