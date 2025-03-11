@@ -7,28 +7,27 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Install system dependencies and Tesseract with Hebrew support
+# Install system dependencies for OpenCV and Tesseract OCR
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-heb \
-    libtesseract-dev \
-    libgl1-mesa-glx \
-    && rm -rf /var/lib/apt/lists/*
+    libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    libgl1-mesa-glx
 
-# Set the Tesseract-OCR data path
+# Ensure Hebrew trained data exists
+RUN ls -lah /usr/share/tesseract-ocr/4.00/tessdata/
+
+# Set environment variable for Tesseract data
 ENV TESSDATA_PREFIX="/usr/share/tesseract-ocr/4.00/tessdata"
 
-# Verify that Tesseract is installed correctly
-RUN tesseract --version
-
-# Install Python dependencies
+# Install required Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port 5000 for Flask app
+# Expose port 5000 for Flask
 EXPOSE 5000
 
-# Define environment variable
-ENV FLASK_APP=server.py
-
-# Run the application
+# Define the command to run the application
 CMD ["python", "server.py"]
