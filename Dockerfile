@@ -4,24 +4,27 @@ FROM python:3.11
 # Set the working directory in the container
 WORKDIR /app
 
-# Install required system dependencies
-RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    libtesseract-dev \
-    libleptonica-dev \
-    libgl1-mesa-glx  
-
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Install Python dependencies
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port 5000
+# Install Tesseract-OCR and dependencies
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    libtesseract-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the Tesseract-OCR data path
+ENV TESSDATA_PREFIX="/usr/share/tesseract-ocr/4.00/tessdata"
+
+# Expose port 5000 for Flask app
 EXPOSE 5000
 
-# Define environment variables
-ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata/
+# Define environment variable
+ENV FLASK_APP=server.py
 
-# Command to run the application
+# Run the application
 CMD ["python", "server.py"]
