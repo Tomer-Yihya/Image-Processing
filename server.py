@@ -11,8 +11,9 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.route('/', methods=['GET'])
+@app.route("/", methods=["GET"])
 def home():
+    """Check if the server is running."""
     return jsonify({"message": "Server is running"}), 200
 
 @app.route('/upload', methods=['POST'])
