@@ -7,10 +7,10 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Install system dependencies
+# Install system dependencies and Tesseract with Hebrew support
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
-    tesseract-ocr-eng \
+    tesseract-ocr-heb \
     libtesseract-dev \
     libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
