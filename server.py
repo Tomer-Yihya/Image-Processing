@@ -11,6 +11,10 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({"message": "Server is running"}), 200
+
 @app.route('/upload', methods=['POST'])
 def upload_image():
     """Handles image uploads and processes them using the extraction algorithm."""
