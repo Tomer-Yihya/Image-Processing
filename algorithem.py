@@ -523,10 +523,16 @@ def extract_fields_from_barcode(image, barcode_location, strip_id, display=False
         
     elif strip_id == 2:
         # Second strip barcode shifts
+        name_shift = (45, -220, 220, 45)
+        id_shift = (-25, -143, 130, 37)
+        date_shift = (-25, -107, 130, 36)
+        case_id_shift = (-25, -42, 160, 41)
+        """
         name_shift = (25, -200, 220, 45)
         id_shift = (-25, -138, 140, 37)
         date_shift = (-25, -101, 130, 36)
         case_id_shift = (-25, -42, 160, 41)
+        """
     
     elif strip_id == 3:
         # Third strip barcode shifts
@@ -808,6 +814,3 @@ if __name__ == "__main__":
     main()
 
 """
-
-
-
