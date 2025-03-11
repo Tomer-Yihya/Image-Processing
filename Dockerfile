@@ -18,17 +18,18 @@ RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     wget
 
+# Ensure Tesseract tessdata directory exists
+RUN mkdir -p /usr/share/tesseract-ocr/4.00/tessdata
+
+# Download Hebrew trained data (if missing)
+RUN wget -O /usr/share/tesseract-ocr/4.00/tessdata/heb.traineddata \
+    https://github.com/tesseract-ocr/tessdata_best/raw/main/heb.traineddata
+
 # Set Tesseract OCR language data path
 ENV TESSDATA_PREFIX="/usr/share/tesseract-ocr/4.00/tessdata"
 
-# Ensure Hebrew trained data exists
-RUN if [ ! -f "$TESSDATA_PREFIX/heb.traineddata" ]; then \
-        wget -O "$TESSDATA_PREFIX/heb.traineddata" \
-        https://github.com/tesseract-ocr/tessdata_best/raw/main/heb.traineddata; \
-    fi
-
-# Verify Tesseract installation
-RUN tesseract --list-langs || echo "Tesseract installation check failed"
+# Verify installation - check if Hebrew is available
+RUN tesseract --list-langs
 
 # Install required Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
