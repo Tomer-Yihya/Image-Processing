@@ -15,8 +15,9 @@ RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libgl1 \
-    zbar \
+    libzbar0 \
     && rm -rf /var/lib/apt/lists/*
+
 
 # Ensure Hebrew trained data exists
 RUN mkdir -p /usr/share/tesseract-ocr/4.00/tessdata/ && \
