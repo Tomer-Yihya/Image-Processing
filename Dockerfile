@@ -20,9 +20,11 @@ RUN apt-get update && apt-get install -y \
 
 
 # Ensure Hebrew trained data exists
-RUN mkdir -p /usr/share/tesseract-ocr/4.00/tessdata/ && \
+RUN apt-get update && apt-get install -y wget && \
+    mkdir -p /usr/share/tesseract-ocr/4.00/tessdata/ && \
     wget -O /usr/share/tesseract-ocr/4.00/tessdata/heb.traineddata \
     https://github.com/tesseract-ocr/tessdata_best/raw/main/heb.traineddata
+
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
