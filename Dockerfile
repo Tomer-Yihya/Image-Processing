@@ -18,6 +18,9 @@ RUN apt-get update && apt-get install -y \
 # Set the Tesseract-OCR data path
 ENV TESSDATA_PREFIX="/usr/share/tesseract-ocr/4.00/tessdata"
 
+# Verify that Tesseract is installed correctly
+RUN tesseract --version
+
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
