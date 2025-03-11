@@ -1,45 +1,43 @@
-from flask import Flask, request, jsonify
 import os
-import tempfile
-import algorithem  # Importing the custom algorithm module
+import json
+from flask import Flask, request, jsonify
+from werkzeug.utils import secure_filename
+from algorithem import extract_text_as_json
 
 app = Flask(__name__)
 
+# Directory to store uploaded images
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 @app.route('/upload', methods=['POST'])
 def upload_image():
-    """
-    Handles image upload, processes it using the algorithm, extracts relevant fields, 
-    and returns the extracted data in JSON format.
-    """
+    """Handles image uploads and processes them using the extraction algorithm."""
     if 'image' not in request.files:
         return jsonify({"error": "No image file provided"}), 400
 
     image_file = request.files['image']
 
-    # Save the uploaded image to a temporary file
-    temp_dir = tempfile.gettempdir()
-    temp_path = os.path.join(temp_dir, image_file.filename)
-    image_file.save(temp_path)
+    if image_file.filename == '':
+        return jsonify({"error": "Empty filename"}), 400
+
+    # Save the image temporarily
+    filename = secure_filename(image_file.filename)
+    image_path = os.path.join(UPLOAD_FOLDER, filename)
+    image_file.save(image_path)
 
     try:
-        # **1. Image Processing** - Cropping and preparing the sticker
-        resized = algorithem.process_image(temp_path)
+        # Process the image and extract text as JSON
+        extracted_json = extract_text_as_json(image_path)
 
-        # **2. Barcode Detection** - Identifying all barcodes in the sticker
-        detected_barcodes = algorithem.detect_all_barcodes(resized, display_results=False)
+        # Delete the temporary file after processing
+        os.remove(image_path)
 
-        # **3. Field Extraction** - Extracting relevant fields based on barcode locations
-        extracted_fields = algorithem.process_barcodes_and_extract_fields(resized, detected_barcodes, display=False)
-
-        # **4. Adjust Hebrew Name Orientation (Right-to-Left)**
-        if 'name' in extracted_fields:
-            extracted_fields['name'] = extracted_fields['name'][::-1]
-
-        return jsonify(extracted_fields), 200
+        # Return the extracted data
+        return extracted_json, 200, {'Content-Type': 'application/json'}
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Run the Flask server, allowing access from any network interface
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

@@ -740,12 +740,43 @@ def save_fields_to_json(fields, output_path):
 
 
 
+
+
+
+def extract_text_as_json(image_path):
+    """
+    Extracts data from the given image path and returns it as a JSON string.
+    """
+
+    # Step 1: Detect and resize the yellow sticker
+    resized = process_image(image_path)
+
+    # Step 2: Find all barcodes in the resized image
+    detected_barcodes = detect_all_barcodes(resized, display_results=False)
+
+    # Step 3: Process barcodes and extract fields
+    extracted_fields = process_barcodes_and_extract_fields(resized, detected_barcodes, display=False)
+
+    # Convert to JSON format
+    json_output = json.dumps(extracted_fields, ensure_ascii=False, indent=2)
+    
+    return json_output
+
+
+
+
+
+
+
+
+
+
+
 #!/usr/bin/env python3
 """
 Yellow Sticker Barcode Detection and Field Extraction Script
 This script processes an image containing a yellow sticker with barcodes,
 detects the barcodes, and extracts relevant patient fields.
-"""
 
 def main():
     # Set up command line argument parsing
@@ -776,6 +807,7 @@ def main():
 if __name__ == "__main__":
     main()
 
+"""
 
 
 
