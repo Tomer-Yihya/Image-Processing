@@ -4,7 +4,6 @@ from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 from algorithem import extract_text_as_json
 import pyzbar
-print("✅ Pyzbar is installed and working!")
 
 app = Flask(__name__)
 
