@@ -32,4 +32,4 @@ EXPOSE 5000
 ENV TESSDATA_PREFIX="/usr/share/tesseract-ocr/4.00/tessdata"
 
 # Run the application
-CMD ["python", "server.py"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "server:app"]
