@@ -10,16 +10,22 @@ COPY . /app
 # Install system dependencies for OpenCV and Tesseract OCR
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
-    tesseract-ocr-all \
+    tesseract-ocr-heb \
     libglib2.0-0 \
     libsm6 \
     libxrender1 \
     libxext6 \
-    libgl1-mesa-glx
+    libgl1-mesa-glx \
+    wget
 
-# Set environment variables for Tesseract
+# Set Tesseract OCR language data path
 ENV TESSDATA_PREFIX="/usr/share/tesseract-ocr/4.00/tessdata"
-ENV PATH="/usr/bin:$PATH"
+
+# Ensure Hebrew trained data exists
+RUN if [ ! -f "$TESSDATA_PREFIX/heb.traineddata" ]; then \
+        wget -O "$TESSDATA_PREFIX/heb.traineddata" \
+        https://github.com/tesseract-ocr/tessdata_best/raw/main/heb.traineddata; \
+    fi
 
 # Verify Tesseract installation
 RUN tesseract --list-langs || echo "Tesseract installation check failed"
