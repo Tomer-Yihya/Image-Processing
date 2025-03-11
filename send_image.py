@@ -4,7 +4,7 @@ import requests
 SERVER_URL = "https://Tomer-and-Daniela-Image-Processing-server.onrender.com/upload"
 
 # Path to the image to be sent
-image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/1.jpg"
+image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/11.jpg"
 
 # Open the image file and send it to the server
 with open(image_path, "rb") as image_file:
