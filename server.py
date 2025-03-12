@@ -1,47 +1,60 @@
-import requests
+import os
 import json
+from flask import Flask, request, jsonify
+from werkzeug.utils import secure_filename
+from algorithem import extract_text_as_json
+import pyzbar
+from werkzeug.middleware.proxy_fix import ProxyFix
 
-def check_module(module_name, display_name):
+app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app)
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # מאפשר העלאת קבצים עד 5MB
+
+# Directory to store uploaded images
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+@app.before_request
+def before_request():
+    request.environ['wsgi.input_terminated'] = False
+
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": "Server is running"}), 200
+
+@app.route('/upload', methods=['POST'])
+def upload_image():
+    print("Received a request to /upload")
+    if 'image' not in request.files:
+        print("❌ No image file provided")
+        return jsonify({"error": "No image file provided"}), 400
+
+    image_file = request.files['image']
+    if image_file.filename == '':
+        print("❌ Empty filename")
+        return jsonify({"error": "Empty filename"}), 400
+
+    filename = secure_filename(image_file.filename)
+    image_path = os.path.join(UPLOAD_FOLDER, filename)
+    image_file.save(image_path)
+    print(f"✅ Image saved at {image_path}")
+    print("Uploaded files:", os.listdir(UPLOAD_FOLDER))
+
     try:
-        __import__(module_name)
-        print(f"✅ {display_name} is installed!")
-    except ModuleNotFoundError:
-        print(f"❌ {display_name} is NOT installed!")
+        print(f"Processing image: {image_path}")
+        extracted_json = extract_text_as_json(image_path)
+        print(f"✅ Extraction complete: {extracted_json}")
+        os.remove(image_path)
 
-# Check for required modules
-check_module("flask", "Flask")
-check_module("flask_cors", "Flask-CORS")
-check_module("cv2", "OpenCV")
-check_module("numpy", "NumPy")
-check_module("matplotlib", "Matplotlib")
-check_module("pytesseract", "Pytesseract")
-check_module("PIL", "Pillow")
-check_module("pyzbar", "Pyzbar")
-check_module("werkzeug", "Werkzeug")
-check_module("requests", "Requests")
+        if not extracted_json:
+            return jsonify({"error": "Failed to process image"}), 500
+        
+        return jsonify(json.loads(extracted_json)), 200
 
-def reverse_hebrew(text):
-    return text[::-1] if isinstance(text, str) else text
+    except Exception as e:
+        print(f"❌ Error processing image: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
-image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/11.jpg"
-url = "https://Just-Do-It-Server.onrender.com/upload"
-
-with open(image_path, "rb") as image_file:
-    files = {"image": image_file}
-    response = requests.post(url, files=files)
-    
-print(f"Response Status Code: {response.status_code}")
-print("Raw Response Text:")
-print(response.text)
-
-try:
-    response.raise_for_status()
-    response_json = response.json()
-    for key in response_json:
-        response_json[key] = reverse_hebrew(response_json[key])
-    print("Response JSON:")
-    print(json.dumps(response_json, ensure_ascii=False, indent=2))
-except requests.exceptions.HTTPError as http_err:
-    print(f"❌ HTTP error occurred: {http_err}")
-except requests.exceptions.RequestException as req_err:
-    print(f"❌ Request error occurred: {req_err}")
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)

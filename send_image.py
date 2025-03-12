@@ -28,7 +28,7 @@ url = "https://Just-Do-It-Server.onrender.com/upload"
 
 with open(image_path, "rb") as image_file:
     files = {"image": image_file}
-    response = requests.post(url, files=files)
+    response = requests.post(url, files=files, timeout=120)
     
 print(f"Response Status Code: {response.status_code}")
 print("Raw Response Text:")
