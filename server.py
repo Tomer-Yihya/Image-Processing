@@ -32,16 +32,19 @@ def upload_image():
     image_file.save(image_path)
 
     try:
+        print(f"Processing image: {image_path}")  # Debug print
         # Process the image and extract text as JSON
         extracted_json = extract_text_as_json(image_path)
-
+        print(f"Extraction complete: {extracted_json}")  # Debug print
+        
         # Delete the temporary file after processing
         os.remove(image_path)
 
-        # Return the extracted data
-        return extracted_json, 200, {'Content-Type': 'application/json'}
+        # Ensure the response is returned as a valid JSON object
+        return jsonify(json.loads(extracted_json)), 200
 
     except Exception as e:
+        print(f"Error processing image: {str(e)}")  # Debug print
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
