@@ -30,6 +30,8 @@ def upload_image():
     filename = secure_filename(image_file.filename)
     image_path = os.path.join(UPLOAD_FOLDER, filename)
     image_file.save(image_path)
+    
+    print("Uploaded files:", os.listdir(UPLOAD_FOLDER))  # Debugging
 
     try:
         print(f"Processing image: {image_path}")  # Debug print
@@ -41,6 +43,9 @@ def upload_image():
         os.remove(image_path)
 
         # Ensure the response is returned as a valid JSON object
+        if not extracted_json:
+            return jsonify({"error": "Failed to process image"}), 500
+        
         return jsonify(json.loads(extracted_json)), 200
 
     except Exception as e:
@@ -49,4 +54,4 @@ def upload_image():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True)
