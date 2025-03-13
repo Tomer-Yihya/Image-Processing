@@ -23,5 +23,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Expose port (Render will assign the actual one)
 EXPOSE 10000
 
-# Run the server
-CMD ["sh", "-c", "gunicorn -w 1 -b 0.0.0.0:$PORT server:app"]
+# Run the server using Flask directly
+CMD ["python", "server.py"]

@@ -39,7 +39,7 @@ REQUIRED_MODULES = {
 }
 
 SERVER_URL = "https://Just-Shoot-It-Server.onrender.com"
-PING_INTERVAL = 300  # 5 minutes instead of 10 to keep it more active
+PING_INTERVAL = 300  # 5 minutes
 
 def keep_server_alive():
     """Sends a periodic request to prevent server from sleeping."""
@@ -126,7 +126,9 @@ def upload_image():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     print(f"🚀 Starting Flask server on port {port}...")
+
     print("📢 Registered routes:")
     for rule in app.url_map.iter_rules():
-        print(f"➡ {rule}")
+        print(f"➡ {rule}")  # Prints all available routes
+
     app.run(host="0.0.0.0", port=port, debug=False)
