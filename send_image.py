@@ -32,23 +32,6 @@ def check_all_modules():
     for module, name in REQUIRED_MODULES.items():
         check_module(module, name)
 
-def check_server_modules():
-    """Send request to server to check installed modules."""
-    try:
-        response = requests.get(f"{server_url}/check_modules", timeout=10)
-        if response.status_code == 200:
-            result = response.json()
-            print("\n🔍 Checking server-side module installation:")
-            for mod, status in result["installed_modules"].items():
-                print(f"{mod}: {status}")
-            if result["missing_modules"]:
-                print("\n⚠️ Missing modules on the server:")
-                print(", ".join(result["missing_modules"]))
-        else:
-            print(f"❌ Server module check failed! Status Code: {response.status_code}")
-    except requests.RequestException as e:
-        print(f"❌ Failed to check server modules: {e}")
-
 def reverse_hebrew(text):
     """Reverse Hebrew text for proper display."""
     return text[::-1] if isinstance(text, str) else text
@@ -62,9 +45,7 @@ def send_image():
             files = {"image": image_file}
             response = requests.post(url, files=files, timeout=120)
 
-        print(f"Response Status Code: {response.status_code}")
-        print("Raw Response Text:")
-        print(response.text)
+        #print(f"Response Status Code: {response.status_code}")
 
         response.raise_for_status()
         response_json = response.json()
@@ -81,6 +62,5 @@ def send_image():
         print(f"❌ JSON Decode Error: {json_err}")
 
 if __name__ == "__main__":
-    check_all_modules()
-    check_server_modules()
+    #check_all_modules()
     send_image()
