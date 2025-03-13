@@ -24,4 +24,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 10000
 
 # Run the server
-CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:10000", "server:app"]
+CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:$PORT", "server:app"]
+
