@@ -49,14 +49,18 @@ def keep_server_alive():
             logger.error(f"Ping failed: {e}")
         time.sleep(PING_INTERVAL)
 
-@app.route("/", methods=["GET"])
-def home():
-    return jsonify({"message": "Server is running"}), 200
 
 @app.route("/status", methods=["GET"])
 def status():
     """Returns server health status."""
+    print("✅ /status route accessed")  # Debugging print
     return jsonify({"status": "ok", "message": "Server is running fine"}), 200
+
+
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": "Server is running"}), 200
+
 
 @app.route("/config", methods=["GET"])
 def config():
