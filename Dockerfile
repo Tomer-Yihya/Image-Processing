@@ -1,20 +1,18 @@
-# Use Ubuntu as base image
+# Use an official image that includes Tesseract OCR
 FROM ubuntu:20.04
 
 # Set environment variables to avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata
 
 # Update and install required packages
 RUN apt-get update && apt-get install -y \
     python3 python3-pip python3-dev \
-    tesseract-ocr libtesseract-dev libleptonica-dev \
-    libgl1-mesa-glx libglib2.0-0 wget \
+    tesseract-ocr tesseract-ocr-all libtesseract-dev libleptonica-dev \
+    libgl1-mesa-glx libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Download Hebrew Tesseract language model
-RUN wget -O /usr/share/tesseract-ocr/4.00/tessdata/heb.traineddata \
-    https://github.com/tesseract-ocr/tessdata_best/raw/main/heb.traineddata
+# Set Tesseract OCR Path
+ENV TESSDATA_PREFIX="/usr/share/tesseract-ocr/4.00/tessdata/"
 
 # Set up working directory
 WORKDIR /app
@@ -25,7 +23,7 @@ COPY . .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port
+# Expose port (Render will assign the actual one)
 EXPOSE 10000
 
 # Run the server
