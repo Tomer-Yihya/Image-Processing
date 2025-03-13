@@ -1,4 +1,4 @@
-# Use an official image that includes Tesseract OCR
+# Use an official Ubuntu image that includes Tesseract OCR
 FROM ubuntu:20.04
 
 # Set environment variables to avoid interactive prompts
@@ -23,5 +23,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Expose port (Render will assign the actual one)
 EXPOSE 10000
 
-# Run the server using Flask directly
-CMD ["python", "server.py"]
+# Run the server
+CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:10000", "server:app"]
