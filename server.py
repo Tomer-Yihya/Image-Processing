@@ -112,7 +112,7 @@ def upload_image():
         logger.error(f"❌ Error processing image: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+
 if __name__ == '__main__':
-    # Start the keep-alive thread
-    threading.Thread(target=keep_server_alive, daemon=True).start()
-    pass  # Gunicorn will manage server execution
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port, debug=True)
