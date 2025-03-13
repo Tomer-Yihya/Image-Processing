@@ -1,5 +1,4 @@
 import os
-os.environ["TESSERACT_CMD"] = "/usr/bin/tesseract"
 import json
 import logging
 import importlib
@@ -11,6 +10,8 @@ from werkzeug.utils import secure_filename
 from flask_cors import CORS
 from algorithem import extract_text_as_json
 
+# Set Tesseract path
+os.environ["TESSERACT_CMD"] = "/usr/bin/tesseract"
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +24,7 @@ app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # Limit file upload size to 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Required modules for checking
 REQUIRED_MODULES = {
     "flask": "Flask",
     "flask_cors": "Flask-CORS",
@@ -36,33 +38,35 @@ REQUIRED_MODULES = {
     "requests": "Requests"
 }
 
-SERVER_URL = "https://Just-Shoot-It-Server.onrender.com"  # Update with your real Render URL
-PING_INTERVAL = 600  # 10 minutes
+SERVER_URL = "https://Just-Shoot-It-Server.onrender.com"
+PING_INTERVAL = 300  # 5 minutes instead of 10 to keep it more active
 
 def keep_server_alive():
     """Sends a periodic request to prevent server from sleeping."""
-    while True:
-        try:
-            response = requests.get(f"{SERVER_URL}/status", timeout=5)
-            logger.info(f"Ping to keep server alive: {response.status_code}")
-        except requests.RequestException as e:
-            logger.error(f"Ping failed: {e}")
-        time.sleep(PING_INTERVAL)
+    def ping():
+        while True:
+            try:
+                response = requests.get(f"{SERVER_URL}/status", timeout=5)
+                logger.info(f"🔄 Ping to keep server alive: {response.status_code}")
+            except requests.RequestException as e:
+                logger.error(f"⚠️ Ping failed: {e}")
+            time.sleep(PING_INTERVAL)
 
+    thread = threading.Thread(target=ping, daemon=True)
+    thread.start()
+
+# Start the keep-alive thread
+keep_server_alive()
 
 @app.route("/status", methods=["GET"])
 def status():
     """Returns server health status."""
-    print("✅ /status route accessed!")  # Debugging print
-    logger.info("✅ /status route accessed!")  # Debugging log
+    logger.info("✅ /status route accessed!")
     return jsonify({"status": "ok", "message": "Server is running fine"}), 200
-
-
 
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"message": "Server is running"}), 200
-
 
 @app.route("/config", methods=["GET"])
 def config():
@@ -86,7 +90,8 @@ def check_modules():
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
-    logger.info("Received a request to /upload")
+    """Handles image upload and processing."""
+    logger.info("📥 Received a request to /upload")
 
     if 'image' not in request.files:
         logger.error("❌ No image file provided")
@@ -102,7 +107,7 @@ def upload_image():
     image_file.save(image_path)
 
     try:
-        logger.info(f"Processing image: {image_path}")
+        logger.info(f"🔍 Processing image: {image_path}")
         extracted_json = extract_text_as_json(image_path)
 
         # ❗ Delete the image after processing ❗
@@ -118,7 +123,7 @@ def upload_image():
         logger.error(f"❌ Error processing image: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
+    print(f"🚀 Starting Flask server on port {port}...")
     app.run(host="0.0.0.0", port=port, debug=False)
