@@ -1,4 +1,5 @@
 import os
+os.environ["TESSERACT_CMD"] = "/usr/bin/tesseract"
 import json
 import logging
 import importlib
@@ -9,6 +10,7 @@ from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 from algorithem import extract_text_as_json
+
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
