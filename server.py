@@ -53,8 +53,10 @@ def keep_server_alive():
 @app.route("/status", methods=["GET"])
 def status():
     """Returns server health status."""
-    print("✅ /status route accessed")  # Debugging print
+    print("✅ /status route accessed!")  # Debugging print
+    logger.info("✅ /status route accessed!")  # Debugging log
     return jsonify({"status": "ok", "message": "Server is running fine"}), 200
+
 
 
 @app.route("/", methods=["GET"])
