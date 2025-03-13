@@ -36,7 +36,7 @@ REQUIRED_MODULES = {
     "requests": "Requests"
 }
 
-SERVER_URL = "https://Just-Do-It-Server.onrender.com"  # Update with your real Render URL
+SERVER_URL = "https://Just-Shoot-It-Server.onrender.com"  # Update with your real Render URL
 PING_INTERVAL = 600  # 10 minutes
 
 def keep_server_alive():
@@ -119,4 +119,4 @@ def upload_image():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)
