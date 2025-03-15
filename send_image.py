@@ -1,7 +1,7 @@
 import requests
 import json
 import importlib
-
+from collections import OrderedDict
 
 image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/11.jpg"
 image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/3.jpg"
@@ -47,15 +47,25 @@ def send_image():
             files = {"image": image_file}
             response = requests.post(url, files=files, timeout=120)
 
-        #print(f"Response Status Code: {response.status_code}")
-
         response.raise_for_status()
         response_json = response.json()
+
+        # Reverse Hebrew text fields
         for key in response_json:
             if isinstance(response_json[key], str):
                 response_json[key] = reverse_hebrew(response_json[key])
+
+        # Ensure JSON fields are printed in the correct order
+        ordered_response = OrderedDict([
+            ("date", response_json.get("date", "")),
+            ("name", response_json.get("name", "")),
+            ("person_id", response_json.get("person_id", "")),
+            ("case_id", response_json.get("case_id", ""))
+        ])
+
         print("\nResponse JSON:")
-        print(json.dumps(response_json, ensure_ascii=False, indent=2))
+        print(json.dumps(ordered_response, ensure_ascii=False, indent=2))
+
     except requests.exceptions.HTTPError as http_err:
         print(f"❌ HTTP error occurred: {http_err}")
     except requests.exceptions.RequestException as req_err:
