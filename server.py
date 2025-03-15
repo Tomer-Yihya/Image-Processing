@@ -63,7 +63,8 @@ def upload_image():
         if not extracted_json:
             return jsonify({"error": "Failed to process image"}), 500
 
-        return jsonify(json.loads(extracted_json)), 200
+        return jsonify(json.loads(extracted_json, object_pairs_hook=dict)), 200
+
 
     except Exception as e:
         logger.error(f"❌ Error processing image: {str(e)}")
