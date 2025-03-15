@@ -534,7 +534,24 @@ def extract_fields_from_barcode(image, barcode_location, strip_id, display=False
         id_shift = (520, -170, 190, 45)
         date_shift = (510, 45, 160, 35)
         case_id_shift = (0, -220, 145, 45)
-        
+    
+    # Extract date (only for strips 2 and 3)
+    if strip_id in [2, 3]:
+        date_roi = (bx + date_shift[0], by + date_shift[1], date_shift[2], date_shift[3])
+        config_str = "--psm 7 -c tessedit_char_whitelist=0123456789."
+        lang = "eng"
+        extracted_date = extract_text_field(image, date_roi, config_str, lang)
+        # Clean up the date - keep only digits and dots
+        cleaned_date = ''.join(ch for ch in extracted_date if ch.isdigit() or ch == '.')
+        # Validate and fix the date format (dd.mm.yy)
+        cleaned_date = fix_date_format(cleaned_date)
+        fields["date"] = cleaned_date
+    else:
+        # For strip 1, use current date
+        current_date = datetime.now().strftime("%d.%m.%Y")
+        fields["date"] = current_date
+
+
     # Extract name (Hebrew)
     if strip_id in [1, 2, 3]:
         name_roi = (bx + name_shift[0], by + name_shift[1], name_shift[2], name_shift[3])
@@ -573,22 +590,6 @@ def extract_fields_from_barcode(image, barcode_location, strip_id, display=False
         cleaned_id = ''.join(ch for ch in extracted_id if ch.isdigit())
         fields["person_id"] = cleaned_id
     
-    # Extract date (only for strips 2 and 3)
-    if strip_id in [2, 3]:
-        date_roi = (bx + date_shift[0], by + date_shift[1], date_shift[2], date_shift[3])
-        config_str = "--psm 7 -c tessedit_char_whitelist=0123456789."
-        lang = "eng"
-        extracted_date = extract_text_field(image, date_roi, config_str, lang)
-        # Clean up the date - keep only digits and dots
-        cleaned_date = ''.join(ch for ch in extracted_date if ch.isdigit() or ch == '.')
-        # Validate and fix the date format (dd.mm.yy)
-        cleaned_date = fix_date_format(cleaned_date)
-        fields["date"] = cleaned_date
-    else:
-        # For strip 1, use current date
-        current_date = datetime.now().strftime("%d.%m.%Y")
-        fields["date"] = current_date
-
     # Extract case ID
     if strip_id in [1, 2, 3]:
         case_id_roi = (bx + case_id_shift[0], by + case_id_shift[1], case_id_shift[2], case_id_shift[3])
