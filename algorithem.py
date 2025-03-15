@@ -593,35 +593,7 @@ def extract_fields_from_barcode(image, barcode_location, strip_id, display=False
     if strip_id in [1, 2, 3]:
         case_id_roi = (bx + case_id_shift[0], by + case_id_shift[1], case_id_shift[2], case_id_shift[3])
         
-        """
-        # Save the ROI for debugging
-        roi_debug = image[by + case_id_shift[1]:by + case_id_shift[1] + case_id_shift[3], 
-                        bx + case_id_shift[0]:bx + case_id_shift[0] + case_id_shift[2]]
-        cv2.imwrite(f'case_id_roi_strip_{strip_id}.jpg', roi_debug)
-        
-        # Try different PSM modes
-        psm_modes = [6, 7, 8, 9, 10, 11, 13]
-        best_result = ""
-        
-        print(f"Trying different PSM modes for Case ID in strip {strip_id}:")
-        for psm in psm_modes:
-            config_str = f"--psm {psm} -c tessedit_char_whitelist=0123456789"
-            lang = "eng"
-            extracted_case_id = extract_text_field(image, case_id_roi, config_str, lang)
-            cleaned_case_id = ''.join(ch for ch in extracted_case_id if ch.isdigit())
-            
-            print(f"  PSM {psm}: Raw: '{extracted_case_id}', Cleaned: '{cleaned_case_id}'")
-            
-            # Keep the longest result (usually the most complete)
-            if len(cleaned_case_id) > len(best_result):
-                best_result = cleaned_case_id
-        
-        # Use the best result
-        fields["case_id"] = best_result
-        print(f"Selected case_id: '{best_result}'")
-        """
     
-    """
     # Extract case ID
     if strip_id in [1, 2, 3]:
         case_id_roi = (bx + case_id_shift[0], by + case_id_shift[1], case_id_shift[2], case_id_shift[3])
@@ -632,7 +604,7 @@ def extract_fields_from_barcode(image, barcode_location, strip_id, display=False
         # Clean up the case ID - keep only digits
         cleaned_case_id = ''.join(ch for ch in extracted_case_id if ch.isdigit())
         fields["case_id"] = cleaned_case_id
-    """
+
 
     if display:
         # Create a visualization with all bounding boxes
@@ -719,7 +691,7 @@ def process_barcodes_and_extract_fields(image, barcodes_dict, display=False):
     fields = extract_fields_from_barcode(image, selected_barcode, selected_strip_id, display)
     
     # Add metadata about which barcode was used
-    fields["strip_id"] = selected_strip_id
+    #fields["strip_id"] = selected_strip_id
 
     return fields
 

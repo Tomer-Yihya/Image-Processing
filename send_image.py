@@ -2,7 +2,9 @@ import requests
 import json
 import importlib
 
+
 image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/11.jpg"
+image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/3.jpg"
 server_url = "https://Just-Shoot-It-Server.onrender.com"
 
 REQUIRED_MODULES = {
