@@ -53,4 +53,4 @@ COPY . .
 EXPOSE 10000
 
 # Run the server
-CMD ["gunicorn", "--bind", "0.0.0.0:10000", "server:app"]
+CMD ["gunicorn", "--timeout", "180", "-w", "1", "-b", "0.0.0.0:10000", "server:app"]
