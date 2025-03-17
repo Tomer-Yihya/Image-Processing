@@ -4,8 +4,8 @@ import os
 import re
 import matplotlib.pyplot as plt
 import pytesseract
-#pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'  # local
-pytesseract.pytesseract.tesseract_cmd = '/usr/local/bin/tesseract'                        # Serer
+pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'  # local
+#pytesseract.pytesseract.tesseract_cmd = '/usr/local/bin/tesseract'                        # Serer
 import json
 from heapq import nlargest
 from PIL import Image
