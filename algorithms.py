@@ -18,7 +18,6 @@ import shutil
 
 
 
-
 def appx_best_fit_ngon(mask, n: int = 4) -> List[Tuple[int, int]]:
 
     # convex hull of the input mask
@@ -752,6 +751,7 @@ def draw_bounding_boxes_on_image(image, detected_barcodes):
     return output
 
 
+
 def extract_text_field(image, roi_coords, config_str="--psm 7", lang="heb"):
     """
     Extract text from a region of interest in an image.
@@ -1141,6 +1141,24 @@ def extract_text_as_json(image_path):
 
     # Step 2: Rectify the sticker's orientation
     rectedImage, rectedSticker, retectedBgMask = rectifyImage(image, fullMask, bgMask, hull, folder_path, fileName)
+
+    # Just to make sure that all the stickers are oriented correctly 
+    decoded_list = decode(rectedSticker,symbols=[pyzbar.ZBarSymbol.CODE128])
+    if len(decoded_list) != 0:
+        if decoded_list[0].type == 'CODE128' and not decoded_list[0].orientation == 'UP':
+            if decoded_list[0].orientation == 'LEFT':
+                # Rotate by 90 degrees clockwise
+                rectedSticker = cv2.rotate(rectedSticker, cv2.ROTATE_90_CLOCKWISE)
+                retectedBgMask = cv2.rotate(retectedBgMask, cv2.ROTATE_90_CLOCKWISE)
+            elif decoded_list[0].orientation == 'RIGHT':
+                # Rotate by 270 degrees clockwise
+                rectedSticker = cv2.rotate(rectedSticker, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                retectedBgMask = cv2.rotate(retectedBgMask, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            elif decoded_list[0].orientation == 'DOWN':
+                # Rotate by 180 degrees clockwise
+                rectedSticker = cv2.rotate(rectedSticker, cv2.ROTATE_180)
+                retectedBgMask = cv2.rotate(retectedBgMask, cv2.ROTATE_180)
+            # cv2.imwrite(os.path.join(debug_dir, name + "_Rotated_rectedImage.jpg"), rectedImage)
 
     # Step 3: Detect barcodes
     detected_barcodes = detect_all_barcodes(rectedSticker, retectedBgMask, foundColor, folder_path, fileName)
