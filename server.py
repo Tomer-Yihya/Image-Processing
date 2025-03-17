@@ -4,7 +4,7 @@ import logging
 import cv2
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
-from algorithm import extract_text_as_json  # ייבוא הפונקציה המתאימה
+from algorithms import extract_text_as_json  # ייבוא הפונקציה המתאימה
 
 # Ensure Tesseract is correctly set up
 TESSERACT_PATH = "/usr/local/bin/tesseract"
