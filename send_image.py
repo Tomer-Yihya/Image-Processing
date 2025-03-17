@@ -3,8 +3,13 @@ import json
 import importlib
 from collections import OrderedDict
 
-image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/11.jpg"
-image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/3.jpg"
+#image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/7.jpg"
+#image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/6.jpg"
+#image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/5.jpg"
+#image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/4.jpg"
+#image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/3.jpg"
+#image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/2.jpg"
+image_path = "C:/Users/A3DC~1/Desktop/data base/pictures/1.jpg"
 server_url = "https://Just-Shoot-It-Server.onrender.com"
 
 REQUIRED_MODULES = {
