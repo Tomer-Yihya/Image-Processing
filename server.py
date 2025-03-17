@@ -1,79 +1,72 @@
 import os
 import json
 import logging
-import importlib
-import threading
-import time
-import requests
+import cv2
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
-from flask_cors import CORS
-from algorithem import extract_text_as_json
+from algorithm import extract_text_as_json  # ייבוא הפונקציה המתאימה
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Ensure Tesseract is correctly set up
+TESSERACT_PATH = "/usr/local/bin/tesseract"
 
-# Set Tesseract OCR Path
-os.environ["TESSERACT_CMD"] = "/usr/bin/tesseract"
-os.environ["TESSDATA_PREFIX"] = "/usr/share/tesseract-ocr/4.00/tessdata/"
-
+# Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Allows access from any origin
 
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # Limit file upload size to 5MB
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("server")
+
+logger.info(f"✅ Tesseract is set to: {TESSERACT_PATH}")
+
 UPLOAD_FOLDER = "uploads"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Function to check allowed file types
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/status", methods=["GET"])
 def status():
-    """Returns server health status."""
+    """Health check route"""
     logger.info("✅ /status route accessed!")
-    return jsonify({"status": "ok", "message": "Server is running fine"}), 200
+    return jsonify({"status": "running"}), 200
 
-@app.route("/", methods=["GET"])
-def home():
-    return jsonify({"message": "Server is running"}), 200
-
-@app.route("/upload", methods=['POST'])
-def upload_image():
+@app.route("/upload", methods=["POST"])
+def upload_file():
+    """Handles image upload and text extraction"""
     logger.info("Received a request to /upload")
 
-    if 'image' not in request.files:
-        logger.error("❌ No image file provided")
-        return jsonify({"error": "No image file provided"}), 400
+    if "image" not in request.files:
+        return jsonify({"error": "No image part"}), 400
+    
+    file = request.files["image"]
+    
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file.save(file_path)
+        logger.info(f"Processing image: {file_path}")
+        
+        try:
+            # שימוש באלגוריתם המתקדם לחילוץ מידע מהתמונה
+            extracted_json = extract_text_as_json(file_path)
 
-    image_file = request.files['image']
-    if image_file.filename == '':
-        logger.error("❌ Empty filename")
-        return jsonify({"error": "Empty filename"}), 400
+            # מחיקת הקובץ לאחר העיבוד כדי לחסוך מקום
+            os.remove(file_path)
 
-    filename = secure_filename(image_file.filename)
-    image_path = os.path.join(UPLOAD_FOLDER, filename)
-    image_file.save(image_path)
+            return jsonify(json.loads(extracted_json)), 200
+        except Exception as e:
+            logger.error(f"❌ Error processing image: {str(e)}")
+            return jsonify({"error": f"Failed to process image: {str(e)}"}), 500
+    
+    return jsonify({"error": "Invalid file format"}), 400
 
-    try:
-        logger.info(f"Processing image: {image_path}")
-        extracted_json = extract_text_as_json(image_path)
-
-        # ❗ Delete the image after processing ❗
-        os.remove(image_path)
-        logger.info(f"✅ Image {filename} processed and deleted")
-
-        if not extracted_json:
-            return jsonify({"error": "Failed to process image"}), 500
-
-        return jsonify(json.loads(extracted_json, object_pairs_hook=dict)), 200
-
-
-    except Exception as e:
-        logger.error(f"❌ Error processing image: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    print(f"🚀 Starting Flask server on port {port}...")
-    print("📢 Registered routes:")
-    for rule in app.url_map.iter_rules():
-        print(f"➡ {rule}")
     app.run(host="0.0.0.0", port=port, debug=False)
